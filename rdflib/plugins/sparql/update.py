@@ -124,10 +124,69 @@ def evalDeleteWhere(ctx, u):
             cg -= _fillTemplate(u.quads[g], c)
 
 
+# def evalModify(ctx, u):
+#     print("hello")
+#     originalctx = ctx
+
+#     # Using replaces the dataset for evaluating the where-clause
+#     if u.using:
+#         otherDefault = False
+#         for d in u.using:
+#             if d.default:
+
+#                 if not otherDefault:
+#                     # replace current default graph
+#                     dg = Graph()
+#                     ctx = ctx.pushGraph(dg)
+#                     otherDefault = True
+
+#                 ctx.load(d.default, default=True)
+
+#             elif d.named:
+#                 g = d.named
+#                 ctx.load(g, default=False)
+
+#     # "The WITH clause provides a convenience for when an operation
+#     # primarily refers to a single graph. If a graph name is specified
+#     # in a WITH clause, then - for the purposes of evaluating the
+#     # WHERE clause - this will define an RDF Dataset containing a
+#     # default graph with the specified name, but only in the absence
+#     # of USING or USING NAMED clauses. In the presence of one or more
+#     # graphs referred to in USING clauses and/or USING NAMED clauses,
+#     # the WITH clause will be ignored while evaluating the WHERE
+#     # clause."
+#     if not u.using and u.withClause:
+#         g = ctx.dataset.get_context(u.withClause)
+#         ctx = ctx.pushGraph(g)
+#     print(u.where)
+#     res = evalPart(ctx, u.where)
+
+#     if u.using:
+#         if otherDefault:
+#             ctx = originalctx  # restore original default graph
+#         if u.withClause:
+#             g = ctx.dataset.get_context(u.withClause)
+#             ctx = ctx.pushGraph(g)
+
+#     for c in res:
+#         dg = ctx.graph
+#         if u.delete:
+#             dg -= _fillTemplate(u.delete.triples, c)
+
+#             for g, q in u.delete.quads.items():
+#                 cg = ctx.dataset.get_context(c.get(g))
+#                 cg -= _fillTemplate(q, c)
+
+#         if u.insert:
+#             dg += _fillTemplate(u.insert.triples, c)
+
+#             for g, q in u.insert.quads.items():
+#                 cg = ctx.dataset.get_context(c.get(g))
+#                 cg += _fillTemplate(q, c)
+
+
 def evalModify(ctx, u):
-
     originalctx = ctx
-
     # Using replaces the dataset for evaluating the where-clause
     if u.using:
         otherDefault = False
@@ -146,20 +205,9 @@ def evalModify(ctx, u):
                 g = d.named
                 ctx.load(g, default=False)
 
-    # "The WITH clause provides a convenience for when an operation
-    # primarily refers to a single graph. If a graph name is specified
-    # in a WITH clause, then - for the purposes of evaluating the
-    # WHERE clause - this will define an RDF Dataset containing a
-    # default graph with the specified name, but only in the absence
-    # of USING or USING NAMED clauses. In the presence of one or more
-    # graphs referred to in USING clauses and/or USING NAMED clauses,
-    # the WITH clause will be ignored while evaluating the WHERE
-    # clause."
     if not u.using and u.withClause:
         g = ctx.dataset.get_context(u.withClause)
         ctx = ctx.pushGraph(g)
-
-    res = evalPart(ctx, u.where)
 
     if u.using:
         if otherDefault:
@@ -167,22 +215,28 @@ def evalModify(ctx, u):
         if u.withClause:
             g = ctx.dataset.get_context(u.withClause)
             ctx = ctx.pushGraph(g)
+    if u.delete:
+        # remove triples
+        g = ctx.graph
+        g -= u.delete.triples
 
-    for c in res:
-        dg = ctx.graph
-        if u.delete:
-            dg -= _fillTemplate(u.delete.triples, c)
+        # remove quads
+        # u.quads is a dict of graphURI=>[triples]
+        for g in u.delete.quads:
+            cg = ctx.dataset.get_context(g)
+            cg -= u.delete.quads[g]
+    
+    if u.insert:
+        # add triples
+        g = ctx.graph
+        g += u.insert.triples
 
-            for g, q in u.delete.quads.items():
-                cg = ctx.dataset.get_context(c.get(g))
-                cg -= _fillTemplate(q, c)
+        # add quads
+        # u.quads is a dict of graphURI=>[triples]
+        for g in u.insert.quads:
+            cg = ctx.dataset.get_context(g)
+            cg += u.insert.quads[g]
 
-        if u.insert:
-            dg += _fillTemplate(u.insert.triples, c)
-
-            for g, q in u.insert.quads.items():
-                cg = ctx.dataset.get_context(c.get(g))
-                cg += _fillTemplate(q, c)
 
 
 def evalAdd(ctx, u):
@@ -254,6 +308,7 @@ def evalCopy(ctx, u):
 
 
 def evalUpdate(graph, update, initBindings={}):
+    print("HELLo")
     """
 
     http://www.w3.org/TR/sparql11-update/#updateLanguage
@@ -303,6 +358,8 @@ def evalUpdate(graph, update, initBindings={}):
                 evalDeleteWhere(ctx, u)
             elif u.name == "Modify":
                 evalModify(ctx, u)
+            # elif u.name == "WithData":
+            #     evalWithData(ctx, u)
             else:
                 raise Exception("Unknown update operation: %s" % (u,))
         except:

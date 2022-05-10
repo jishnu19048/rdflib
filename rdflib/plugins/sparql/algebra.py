@@ -730,7 +730,7 @@ def translateUpdate1(u, prologue):
             u.delete["triples"], u.delete["quads"] = translateQuads(u.delete.quads)
         if u.insert:
             u.insert["triples"], u.insert["quads"] = translateQuads(u.insert.quads)
-        u["where"] = translateGroupGraphPattern(u.where)
+        # u["where"] = translateGroupGraphPattern(u.where)
     else:
         raise Exception("Unknown type of update operation: %s" % u)
 
@@ -742,7 +742,6 @@ def translateUpdate(q, base=None, initNs=None):
     """
     Returns a list of SPARQL Update Algebra expressions
     """
-
     res = []
     prologue = None
     if not q.request:
@@ -769,7 +768,6 @@ def translateQuery(q, base=None, initNs=None):
     """
 
     # We get in: (prologue, query)
-
     prologue = translatePrologue(q[0], base, initNs)
 
     # absolutize/resolve prefixes

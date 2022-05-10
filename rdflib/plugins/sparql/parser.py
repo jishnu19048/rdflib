@@ -1227,13 +1227,23 @@ Modify = Comp(
     "Modify",
     Optional(Keyword("WITH") + Param("withClause", iri))
     + (
-        Param("delete", DeleteClause) + Optional(Param("insert", InsertClause))
-        | Param("insert", InsertClause)
+        Param("delete", DeleteData) + Optional(Param("insert",InsertData))
+        | Param("insert", InsertData)
     )
     + ZeroOrMore(ParamList("using", UsingClause))
-    + Keyword("WHERE")
-    + Param("where", GroupGraphPattern),
+    # + Keyword("WHERE")
+    # + Param("where", GroupGraphPattern),
 )
+
+# Modify = Comp(
+#     "Modify",
+#     Keyword("WITH") + Param("withClause", iri)
+#     + (
+#         Param("delete", DeleteData) 
+#         | Param("insert", InsertData)
+#     )
+#     + ZeroOrMore(ParamList("using", UsingClause)),
+# )
 
 
 # [30] Update1 ::= Load | Clear | Drop | Add | Move | Copy | Create | InsertData | DeleteData | DeleteWhere | Modify
@@ -1249,6 +1259,7 @@ Update1 = (
     | DeleteData
     | DeleteWhere
     | Modify
+    # | WithData
 )
 
 
@@ -1507,6 +1518,7 @@ Update <<= ParamList("prologue", Prologue) + Optional(
 Query = Prologue + (SelectQuery | ConstructQuery | DescribeQuery | AskQuery)
 
 # [3] UpdateUnit ::= Update
+# print(Update)
 UpdateUnit = Comp("Update", Update)
 
 # [1] QueryUnit ::= Query
